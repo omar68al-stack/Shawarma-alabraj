@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>شاورما الأبراج</title>
+<link rel="icon" href="assets/img/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+<div class="page-shell">
+
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-mark"><img src="assets/img/logo.png" alt="شعار شاورما الأبراج" /></div>
+      <div class="topbar-divider"></div>
+      <div class="topbar-title">
+        <h1>شاورما الأبراج</h1>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" id="reset-btn">↺ إعادة تعيين الأرقام</button>
+      <button class="btn" id="theme-toggle">🌓</button>
+      <button class="btn" id="print-btn">🖨️ طباعة</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-link active" data-view="view-overview">نظرة عامة</button>
+    <button class="tab-link" data-view="view-costs">تحليل التكاليف</button>
+    <button class="tab-link" data-view="view-inventory">الجرد اليومي</button>
+    <button class="tab-link" data-view="view-corrective">الخطة التصحيحية</button>
+    <button class="tab-link" data-view="view-debt">خطة سداد الديون</button>
+    <button class="tab-link" data-view="view-purchases">مشتريات قادمة</button>
+    <button class="tab-link" data-view="view-marketing">التسويق</button>
+    <button class="tab-link" data-view="view-admin">معاملات ومتابعات</button>
+  </nav>
+
+  <!-- نظرة عامة -->
+  <section class="view active" id="view-overview">
+    <div class="card" style="margin-bottom:16px">
+      <h3>مدخلات المبيعات والإنتاج اليومي</h3>
+      <span class="card-note">عدّل هذه الأرقام كلما تغيّر أداء المحل — كل المؤشرات تُحسب تلقائياً وتُحفظ في متصفحك</span>
+      <div class="grid grid-4">
+        <div class="input-row"><label>أقل مبيعات يومية</label><div class="input-suffix"><input type="number" id="input-salesLow" min="0" step="50" /><span>ريال</span></div></div>
+        <div class="input-row"><label>أعلى مبيعات يومية</label><div class="input-suffix"><input type="number" id="input-salesHigh" min="0" step="50" /><span>ريال</span></div></div>
+        <div class="input-row"><label>أقل كمية دجاج مُعلّقة</label><div class="input-suffix"><input type="number" id="input-kgLow" min="0" step="1" /><span>كجم/يوم</span></div></div>
+        <div class="input-row"><label>أعلى كمية دجاج مُعلّقة</label><div class="input-suffix"><input type="number" id="input-kgHigh" min="0" step="1" /><span>كجم/يوم</span></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid-4" id="kpi-grid"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>سيناريوهات الربح الشهري</h3>
+      <span class="card-note">مقارنة بين يوم مبيعات ضعيف ومتوسط وقوي، بنفس هيكل التكاليف الحالي</span>
+      <div class="grid grid-3" id="scenario-cards"></div>
+    </div>
+
+    <p class="footnote" id="startup-cost-note"></p>
+  </section>
+
+  <!-- تحليل التكاليف -->
+  <section class="view" id="view-costs">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>الرواتب الشهرية</h3>
+        <span class="card-note">إجمالي الرواتب: <b id="salaries-total"></b></span>
+        <div id="salaries-inputs"></div>
+      </div>
+      <div class="card">
+        <h3>تكاليف تشغيلية ومواد مباشرة</h3>
+        <span class="card-note">عدّل أي بند لحظة تغيّر السعر من المورّد</span>
+        <div id="other-costs-inputs"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>توزيع التكاليف الشهرية — إجمالي <span id="total-costs-value"></span></h3>
+      <span class="card-note">مرتبة من الأعلى للأقل، مع نسبة كل بند من متوسط الإيراد الشهري</span>
+      <div id="cost-bars"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>ثابتة مقابل متغيرة</h3>
+      <span class="card-note">التكاليف الثابتة لا تتغير مع المبيعات؛ المتغيرة (المواد والتغليف) هي محور الخطة التصحيحية</span>
+      <div id="fixed-variable-split"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>عهدة الكاشير الأسبوعية</h3>
+      <span class="card-note">للعرض فقط — الكاشير يسجّل المشتريات من <a href="cashier.html" target="_blank">صفحة العهدة الخاصة به</a></span>
+      <div id="cashier-fund-summary"></div>
+    </div>
+  </section>
+
+  <!-- الجرد اليومي -->
+  <section class="view" id="view-inventory">
+    <p class="footnote" style="margin:0 4px 14px">الشيف يقدر يسجّل الجرد يومياً من <a href="chef.html" target="_blank">صفحته الخاصة</a> — تظهر هنا تلقائياً على نفس الجهاز.</p>
+    <div class="card" id="inventory-toolbar" style="margin-bottom:16px"></div>
+    <div id="inventory-body"></div>
+  </section>
+
+  <!-- الخطة التصحيحية -->
+  <section class="view" id="view-corrective">
+    <div class="card" style="margin-bottom:16px">
+      <div class="progress-header">
+        <h3 style="margin:0">تقدّم الخطة التصحيحية</h3>
+        <span id="corrective-progress-label"></span>
+      </div>
+      <div class="hbar-track" style="height:10px"><div class="hbar-fill" id="corrective-progress-bar" style="width:0%"></div></div>
+    </div>
+    <div id="corrective-content"></div>
+  </section>
+
+  <!-- خطة سداد الديون -->
+  <section class="view" id="view-debt">
+    <div class="card" style="margin-bottom:16px">
+      <h3>الديون الحالية — إجمالي <span id="debts-total"></span></h3>
+      <span class="card-note">رتّب الديون بالأسهم ▲▼ حسب أولوية السداد؛ عدّل الاسم والمبلغ مباشرة</span>
+      <div id="debts-list"></div>
+      <button class="btn btn-sm" id="add-debt-btn" style="margin-top:10px">+ إضافة دين</button>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="input-row"><label>القسط الشهري المخصص لسداد الديون</label><div class="input-suffix"><input type="number" id="input-debtTarget" min="0" step="500" /><span>ريال/شهر</span></div></div>
+    </div>
+
+    <div class="grid grid-4" id="debt-summary"></div>
+
+    <div class="card note-box" id="debt-feasibility-note" style="margin-top:16px"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>خطة السداد بالأولوية</h3>
+      <span class="card-note">القسط الشهري كاملاً يذهب للدائن الأول حتى يُسدَّد، ثم ينتقل للتالي (طريقة "كرة الثلج")</span>
+      <div class="table-wrap" id="debt-priority-plan"></div>
+    </div>
+  </section>
+
+  <!-- مشتريات قادمة -->
+  <section class="view" id="view-purchases">
+    <div class="card" style="margin-bottom:16px">
+      <h3>معدات مخطط شراؤها — إجمالي المتبقي <span id="purchases-total"></span></h3>
+      <span class="card-note">أدخل السعر التقريبي لكل غرض، ورتّبها بالأسهم ▲▼ حسب الأولوية؛ أشّر "تم الشراء" عند إنجازها</span>
+      <div id="purchases-list"></div>
+      <button class="btn btn-sm" id="add-purchase-btn" style="margin-top:10px">+ إضافة غرض</button>
+    </div>
+
+    <div class="card note-box" id="purchases-feasibility-note"></div>
+  </section>
+
+  <!-- التسويق -->
+  <section class="view" id="view-marketing">
+    <div class="card" style="margin-bottom:16px">
+      <h3>المستهدفات الأسبوعية</h3>
+      <span class="card-note">نشاطات بدون تكلفة تشغيلية إضافية — عدّل المستهدف أو رتّب حسب الأولوية</span>
+      <div id="marketing-goals-list"></div>
+      <button class="btn btn-sm" id="add-marketing-goal-btn" style="margin-top:10px">+ إضافة مستهدف</button>
+    </div>
+
+    <div class="card" id="marketing-toolbar" style="margin-bottom:16px"></div>
+    <div id="marketing-body"></div>
+  </section>
+
+  <!-- معاملات ومتابعات إدارية -->
+  <section class="view" id="view-admin">
+    <div class="grid grid-4" id="admin-kpi-grid" style="margin-bottom:16px"></div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="progress-header">
+        <h3 style="margin:0">تقدّم المتابعات</h3>
+        <span id="admin-progress-label"></span>
+      </div>
+      <div class="hbar-track" style="height:10px"><div class="hbar-fill" id="admin-progress-bar" style="width:0%"></div></div>
+    </div>
+    <div id="admin-tasks-content"></div>
+  </section>
+
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
