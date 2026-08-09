@@ -43,9 +43,41 @@
   <section class="view active" id="view-overview">
     <div class="card" style="margin-bottom:16px">
       <h3>لوحة المتابعة</h3>
-      <span class="card-note">أهم أرقام المتابعة والتصحيح من كل أقسام الموقع بمكان واحد — اضغط أي بطاقة للانتقال لتفاصيلها</span>
+      <span class="card-note">أهم أرقام المتابعة والتصحيح من كل أقسام الموقع بمكان واحد — اضغط أي بطاقة أو رسم للانتقال لتفاصيله</span>
     </div>
-    <div class="grid grid-3" id="followup-grid"></div>
+    <div class="kpi-strip" id="followup-grid"></div>
+
+    <div class="grid grid-2" style="margin-top:16px">
+      <div class="card followup-card" id="ov-debt-card">
+        <h3>توزيع الديون حسب الدائن</h3>
+        <span class="card-note">إجمالي الديون: <b id="ov-debt-total"></b></span>
+        <div id="ov-debt-chart"></div>
+      </div>
+      <div class="card followup-card" id="ov-corrective-card">
+        <h3>تقدّم الخطة التصحيحية بالمراحل</h3>
+        <span class="card-note">نسبة الإنجاز لكل مرحلة زمنية</span>
+        <div id="ov-corrective-chart"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:16px">
+      <div class="card followup-card" id="ov-admin-card">
+        <h3>حالة المعاملات الإدارية</h3>
+        <span class="card-note" id="ov-admin-note"></span>
+        <div id="ov-admin-chart"></div>
+      </div>
+      <div class="card followup-card" id="ov-chicken-card">
+        <h3>استهلاك الدجاج — آخر الأيام</h3>
+        <span class="card-note">النطاق المستهدف: <span id="ov-chicken-range"></span></span>
+        <div id="ov-chicken-chart"></div>
+      </div>
+    </div>
+
+    <div class="card followup-card" id="ov-marketing-card" style="margin-top:16px">
+      <h3>التسويق — الفعلي مقابل المستهدف هذا الأسبوع</h3>
+      <span class="card-note" id="ov-marketing-note"></span>
+      <div id="ov-marketing-chart"></div>
+    </div>
   </section>
 
   <!-- تحليل التكاليف -->

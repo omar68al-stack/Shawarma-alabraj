@@ -427,6 +427,105 @@ function renderOverview() {
     tile.onclick = () => switchToTab(c.view);
     grid.appendChild(tile);
   });
+
+  renderOverviewCharts(s);
+}
+
+function hbarRow(label, pctOfMax, valueText, tag) {
+  const row = el('div', 'hbar-row hbar-row-compact');
+  row.innerHTML = `
+    <div class="hbar-label">${label}${tag ? ` <span class="tag-cat">${tag}</span>` : ''}</div>
+    <div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(0, Math.min(100, pctOfMax))}%"></div></div>
+    <div class="hbar-value">${valueText}</div>`;
+  return row;
+}
+
+function renderOverviewCharts(s) {
+  document.getElementById('ov-debt-card').onclick = () => switchToTab('view-debt');
+  document.getElementById('ov-corrective-card').onclick = () => switchToTab('view-corrective');
+  document.getElementById('ov-admin-card').onclick = () => switchToTab('view-admin');
+  document.getElementById('ov-chicken-card').onclick = () => switchToTab('view-inventory');
+  document.getElementById('ov-marketing-card').onclick = () => switchToTab('view-marketing');
+
+  // توزيع الديون حسب الدائن
+  document.getElementById('ov-debt-total').textContent = fmt(s.totalDebt);
+  const debtChart = document.getElementById('ov-debt-chart');
+  debtChart.innerHTML = '';
+  if (state.debts.length) {
+    const sortedDebts = [...state.debts].sort((a, b) => b.amount - a.amount);
+    const maxDebt = sortedDebts[0].amount || 1;
+    sortedDebts.forEach((d) => {
+      const pct = s.totalDebt ? (d.amount / s.totalDebt) * 100 : 0;
+      debtChart.appendChild(hbarRow(d.name, (d.amount / maxDebt) * 100, `${fmt(d.amount)}<span class="hbar-pct">${pct.toFixed(0)}%</span>`));
+    });
+  } else {
+    debtChart.innerHTML = '<div class="chart-empty">لا توجد ديون مسجّلة.</div>';
+  }
+
+  // تقدّم الخطة التصحيحية بالمراحل
+  const correctiveChart = document.getElementById('ov-corrective-chart');
+  correctiveChart.innerHTML = '';
+  CORRECTIVE_PHASES.forEach((phase) => {
+    const total = phase.items.length;
+    const done = phase.items.filter((it) => state.checklist[it.id]).length;
+    const pct = total ? (done / total) * 100 : 0;
+    correctiveChart.appendChild(hbarRow(phase.title, pct, `${done}/${total}<span class="hbar-pct">${pct.toFixed(0)}%</span>`, phase.duration));
+  });
+
+  // حالة المعاملات الإدارية
+  const total = state.adminTasks.length;
+  const doneCount = state.adminTasks.filter((t) => t.status === 'done').length;
+  const progressCount = state.adminTasks.filter((t) => t.status === 'in_progress').length;
+  const pendingCount = state.adminTasks.filter((t) => t.status === 'pending').length;
+  document.getElementById('ov-admin-note').textContent = `${total} معاملة إجمالاً`;
+  const adminChart = document.getElementById('ov-admin-chart');
+  adminChart.innerHTML = `
+    <div class="stacked-bar">
+      <div class="stacked-seg-done" style="width:${total ? (doneCount / total) * 100 : 0}%"></div>
+      <div class="stacked-seg-progress" style="width:${total ? (progressCount / total) * 100 : 0}%"></div>
+      <div class="stacked-seg-pending" style="width:${total ? (pendingCount / total) * 100 : 0}%"></div>
+    </div>
+    <div class="stacked-legend">
+      <span><i class="dot done"></i> منجزة ${doneCount}</span>
+      <span><i class="dot progress"></i> جارية ${progressCount}</span>
+      <span><i class="dot pending"></i> لم تبدأ ${pendingCount}</span>
+      ${s.overdueCount ? `<span class="overdue-badge">⚠ ${s.overdueCount} متأخرة</span>` : ''}
+    </div>`;
+
+  // استهلاك الدجاج آخر الأيام
+  document.getElementById('ov-chicken-range').textContent = `${state.kgLow}–${state.kgHigh} كجم/يوم`;
+  const chickenChart = document.getElementById('ov-chicken-chart');
+  chickenChart.innerHTML = '';
+  const recentLogs = sortedInventoryLogs().slice(0, 7);
+  if (recentLogs.length) {
+    const maxKg = Math.max(state.kgHigh, ...recentLogs.map((l) => l.chickenConsumedKg)) * 1.1 || 1;
+    recentLogs.forEach((log) => {
+      const tone = log.chickenConsumedKg > state.kgHigh ? 'critical' : log.chickenConsumedKg < state.kgLow ? 'warning' : 'good';
+      const row = hbarRow(log.date, (log.chickenConsumedKg / maxKg) * 100, `${log.chickenConsumedKg} كجم`);
+      row.querySelector('.hbar-fill').classList.add('tone-bg-' + tone);
+      chickenChart.appendChild(row);
+    });
+  } else {
+    chickenChart.innerHTML = '<div class="chart-empty">لا يوجد جرد مسجّل بعد.</div>';
+  }
+
+  // التسويق: الفعلي مقابل المستهدف
+  const marketingChart = document.getElementById('ov-marketing-chart');
+  marketingChart.innerHTML = '';
+  if (s.marketingWeek && state.marketingGoals.length) {
+    document.getElementById('ov-marketing-note').textContent = `أسبوع ${s.marketingWeek.weekStart}`;
+    state.marketingGoals.forEach((g) => {
+      const actual = s.marketingWeek.actuals[g.id] || 0;
+      const pct = g.targetPerWeek > 0 ? (actual / g.targetPerWeek) * 100 : 0;
+      const tone = pct >= 100 ? 'good' : pct >= 50 ? 'warning' : 'critical';
+      const row = hbarRow(g.name, pct, `${actual}/${g.targetPerWeek} ${g.unit}<span class="hbar-pct">${pct.toFixed(0)}%</span>`);
+      row.querySelector('.hbar-fill').classList.add('tone-bg-' + tone);
+      marketingChart.appendChild(row);
+    });
+  } else {
+    document.getElementById('ov-marketing-note').textContent = '';
+    marketingChart.innerHTML = '<div class="chart-empty">ما فيه أسبوع تسويق مسجّل بعد.</div>';
+  }
 }
 
 function bindNumberInput(inputId, stateKey, onChange) {

@@ -205,6 +205,35 @@ section.view.active { display: block; }
 .followup-card { cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; }
 .followup-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.08); border-color: var(--brand); }
 
+/* Overview KPI strip */
+.kpi-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.kpi-strip .card { padding: 14px 12px; }
+.kpi-strip .stat-label { font-size: 11px; }
+.kpi-strip .stat-value { font-size: 19px; margin: 6px 0 4px; }
+.kpi-strip .stat-delta { font-size: 10.5px; }
+@media (max-width: 1080px) { .kpi-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+
+/* Overview mini charts */
+.hbar-row-compact { grid-template-columns: 130px 1fr 78px; }
+.hbar-row-compact .hbar-label { font-size: 12px; }
+.hbar-row-compact .hbar-value { font-size: 12px; }
+.chart-empty { font-size: 12.5px; color: var(--text-muted); padding: 6px 0; }
+
+.stacked-bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+.stacked-seg-done { background: var(--good); }
+.stacked-seg-progress { background: var(--warning); }
+.stacked-seg-pending { background: var(--text-muted); }
+.stacked-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-secondary); }
+.stacked-legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-inline-end: 5px; }
+.stacked-legend .dot.done { background: var(--good); }
+.stacked-legend .dot.progress { background: var(--warning); }
+.stacked-legend .dot.pending { background: var(--text-muted); }
+.stacked-legend .overdue-badge { color: var(--critical); font-weight: 600; }
+.hbar-fill.tone-bg-good { background: var(--good); }
+.hbar-fill.tone-bg-warning { background: var(--warning); }
+.hbar-fill.tone-bg-critical { background: var(--critical); }
+
 /* Inputs */
 .input-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--grid); }
 .input-row:last-child { border-bottom: none; }
