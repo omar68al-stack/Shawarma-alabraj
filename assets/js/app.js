@@ -334,7 +334,7 @@ function computeFollowUpSummary() {
 
   const adminTotal = state.adminTasks.length;
   const adminDone = state.adminTasks.filter((t) => t.status === 'done').length;
-  const overdueCount = state.adminTasks.filter((t) => t.dueDate && t.status !== 'done' && t.dueDate < today).length;
+  const adminPending = state.adminTasks.filter((t) => t.status === 'pending').length;
 
   const sortedLogs = sortedInventoryLogs();
   const loggedToday = sortedLogs.some((l) => l.date === today);
@@ -362,7 +362,7 @@ function computeFollowUpSummary() {
   return {
     totalDebt, debtCount,
     correctivePct, correctiveDone, correctiveTotal,
-    overdueCount, adminDone, adminTotal,
+    adminDone, adminPending, adminTotal,
     loggedToday, latestInventory,
     cashierWeek, cashierRemaining,
     marketingWeek, marketingPct,
@@ -389,10 +389,10 @@ function renderOverview() {
       view: 'view-corrective',
     },
     {
-      label: 'المعاملات المتأخرة',
-      value: String(s.overdueCount),
+      label: 'معاملات لم تبدأ',
+      value: String(s.adminPending),
       note: `${s.adminDone} من ${s.adminTotal} معاملة منجزة`,
-      tone: s.overdueCount ? 'critical' : 'good',
+      tone: s.adminPending ? 'warning' : 'good',
       view: 'view-admin',
     },
     {
@@ -489,7 +489,6 @@ function renderOverviewCharts(s) {
       <span><i class="dot done"></i> منجزة ${doneCount}</span>
       <span><i class="dot progress"></i> جارية ${progressCount}</span>
       <span><i class="dot pending"></i> لم تبدأ ${pendingCount}</span>
-      ${s.overdueCount ? `<span class="overdue-badge">⚠ ${s.overdueCount} متأخرة</span>` : ''}
     </div>`;
 
   // استهلاك الدجاج آخر الأيام
@@ -1447,15 +1446,13 @@ function removeAdminTask(id) {
 }
 
 function addAdminTask(category) {
-  state.adminTasks.push({ id: 'admin-' + Date.now(), category, name: '', assignee: '', dueDate: '', status: 'pending' });
+  state.adminTasks.push({ id: 'admin-' + Date.now(), category, name: '', status: 'pending' });
   saveState();
   renderAdminTasks();
 }
 
 function renderAdminTaskRow(task) {
-  const today = todayISO();
-  const isOverdue = task.dueDate && task.status !== 'done' && task.dueDate < today;
-  const card = el('div', 'task-card' + (isOverdue ? ' task-card-overdue' : ''));
+  const card = el('div', 'task-card');
 
   const topRow = el('div', 'task-card-top');
   const nameInput = el('input', 'task-name-input'); nameInput.placeholder = 'اسم المعاملة'; nameInput.value = task.name;
@@ -1484,44 +1481,15 @@ function renderAdminTaskRow(task) {
   topRow.appendChild(removeBtn);
   card.appendChild(topRow);
 
-  const fieldsRow = el('div', 'task-card-fields');
-
-  const assigneeField = el('div', 'task-field');
-  assigneeField.innerHTML = '<label>المسؤول</label>';
-  const assigneeInput = document.createElement('input');
-  assigneeInput.type = 'text';
-  assigneeInput.placeholder = 'مثال: صاحب المحل، المحاسبة...';
-  assigneeInput.value = task.assignee || '';
-  assigneeInput.oninput = (e) => { task.assignee = e.target.value; saveState(); };
-  assigneeField.appendChild(assigneeInput);
-
-  const dateField = el('div', 'task-field');
-  dateField.innerHTML = '<label>تاريخ الاستحقاق</label>';
-  const dateInput = document.createElement('input');
-  dateInput.type = 'date';
-  dateInput.dir = 'ltr';
-  dateInput.value = task.dueDate || '';
-  dateInput.oninput = (e) => { task.dueDate = e.target.value; saveState(); renderAdminTasks(); };
-  dateField.appendChild(dateInput);
-
-  fieldsRow.appendChild(assigneeField);
-  fieldsRow.appendChild(dateField);
-  card.appendChild(fieldsRow);
-
-  if (isOverdue) {
-    card.appendChild(el('div', 'task-overdue-note', `⚠ متأخر — كان موعده ${task.dueDate}`));
-  }
-
   return card;
 }
 
 function computeAdminStats() {
-  const today = todayISO();
   const total = state.adminTasks.length;
   const done = state.adminTasks.filter((t) => t.status === 'done').length;
   const inProgress = state.adminTasks.filter((t) => t.status === 'in_progress').length;
-  const overdue = state.adminTasks.filter((t) => t.dueDate && t.status !== 'done' && t.dueDate < today).length;
-  return { total, done, inProgress, overdue };
+  const pending = state.adminTasks.filter((t) => t.status === 'pending').length;
+  return { total, done, inProgress, pending };
 }
 
 function renderAdminKPIs() {
@@ -1532,7 +1500,7 @@ function renderAdminKPIs() {
     { label: 'إجمالي المعاملات', value: stats.total },
     { label: 'منجزة', value: stats.done, tone: 'good' },
     { label: 'جارية', value: stats.inProgress, tone: stats.inProgress ? 'warning' : '' },
-    { label: 'متأخرة', value: stats.overdue, tone: stats.overdue ? 'critical' : 'good' },
+    { label: 'لم تبدأ', value: stats.pending },
   ];
   kpis.forEach((k) => {
     const tile = el('div', 'card stat-tile');

@@ -69,15 +69,15 @@ const DEFAULT_STATE = {
 
   // معاملات ومتابعات إدارية — حالة كل بند: pending (لم يبدأ) / in_progress (جارٍ) / done (منجز)
   adminTasks: [
-    { id: 'admin-registry', category: 'store', name: 'نقل السجل', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-baladi', category: 'store', name: 'تجديد رخصة بلدي', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-civildefense', category: 'store', name: 'تجديد الدفاع المدني', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-mudad', category: 'store', name: 'تسجيل في مدد للرواتب', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-qiwa', category: 'store', name: 'تجديد رسوم قوى', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-bloodtest', category: 'hr', name: 'فحص الدم للعمالة', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-iqama-junaid', category: 'hr', name: 'تجديد إقامة جنيد', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-iqama-iqbal', category: 'hr', name: 'تجديد إقامة اقبال', assignee: '', dueDate: '', status: 'pending' },
-    { id: 'admin-healthcert', category: 'hr', name: 'استخراج الشهادات الصحية', assignee: '', dueDate: '', status: 'pending' },
+    { id: 'admin-registry', category: 'store', name: 'نقل السجل', status: 'pending' },
+    { id: 'admin-baladi', category: 'store', name: 'تجديد رخصة بلدي', status: 'pending' },
+    { id: 'admin-civildefense', category: 'store', name: 'تجديد الدفاع المدني', status: 'pending' },
+    { id: 'admin-mudad', category: 'store', name: 'تسجيل في مدد للرواتب', status: 'pending' },
+    { id: 'admin-qiwa', category: 'store', name: 'تجديد رسوم قوى', status: 'pending' },
+    { id: 'admin-bloodtest', category: 'hr', name: 'فحص الدم للعمالة', status: 'pending' },
+    { id: 'admin-iqama-junaid', category: 'hr', name: 'تجديد إقامة جنيد', status: 'pending' },
+    { id: 'admin-iqama-iqbal', category: 'hr', name: 'تجديد إقامة اقبال', status: 'pending' },
+    { id: 'admin-healthcert', category: 'hr', name: 'استخراج الشهادات الصحية', status: 'pending' },
   ],
 
   // عهدة الكاشير الأسبوعية — تُدار من صفحة منفصلة (cashier.html) يدخل عليها الكاشير مباشرة
