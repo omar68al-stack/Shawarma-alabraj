@@ -292,6 +292,9 @@ function initTabs() {
       document.querySelectorAll('section.view').forEach((v) => v.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.view).classList.add('active');
+      if (btn.dataset.view === 'view-costs' || btn.dataset.view === 'view-overview') {
+        syncCashierFromCloud();
+      }
     });
   });
 }
@@ -620,6 +623,31 @@ function renderCosts() {
      <div class="split-legend"><span><i class="dot fixed"></i> ثابتة ${m.fixedPct.toFixed(0)}%</span><span><i class="dot variable"></i> متغيرة (مواد وتغليف) ${m.variablePct.toFixed(0)}%</span></div>`;
 
   renderCashierFundSummary();
+}
+
+// ---------- مزامنة عهدة الكاشير من Google Sheets (يسجّلها الكاشير من جواله الشخصي) ----------
+function setCashierSyncStatus(text, tone) {
+  const el = document.getElementById('cashier-sync-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
+}
+
+async function syncCashierFromCloud() {
+  if (!CASHIER_SYNC_URL) return;
+  setCashierSyncStatus('🔄 مزامنة...', '');
+  try {
+    const res = await fetch(CASHIER_SYNC_URL);
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    state.cashierFund.weeks = data.weeks || [];
+    saveState();
+    setCashierSyncStatus('✓ متزامن', 'good');
+    renderCosts();
+    renderOverview();
+  } catch (e) {
+    setCashierSyncStatus('⚠ بدون اتصال — عرض آخر نسخة محفوظة', 'critical');
+  }
 }
 
 function renderCashierFundSummary() {
@@ -1585,6 +1613,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initTheme();
   renderAll();
+  syncCashierFromCloud();
 
   document.getElementById('export-btn').addEventListener('click', exportBackup);
   document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());

@@ -8,6 +8,10 @@ const CASHIER_PIN = '1234';
 const CHEF_PIN = '2580';
 const MARKETER_PIN = '3690';
 
+// رابط Google Apps Script Web App لمزامنة عهدة الكاشير بين الأجهزة (كل واحد من جواله الشخصي)
+// اتركه فاضياً '' لتعطيل المزامنة والعمل محلياً بس على نفس الجهاز — راجع google-apps-script/CashierSync.gs للتركيب
+const CASHIER_SYNC_URL = '';
+
 const DEFAULT_STATE = {
   // مبيعات يومية (نطاق سيء/جيد)
   salesLow: 1600,

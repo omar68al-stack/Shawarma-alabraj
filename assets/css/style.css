@@ -509,6 +509,9 @@ tbody tr:hover { background: var(--surface-2); }
 .cashier-header .brand-mark { width: 46px; height: 46px; border-radius: 12px; }
 .cashier-header h1 { font-size: 17px; margin: 0; }
 .cashier-header .sub { font-size: 12px; color: var(--text-secondary); }
+.sync-status { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.sync-status.tone-good { color: var(--good); }
+.sync-status.tone-critical { color: var(--critical); }
 
 /* Lock screen */
 .lock-screen { display: flex; flex-direction: column; align-items: center; padding-top: 40px; }

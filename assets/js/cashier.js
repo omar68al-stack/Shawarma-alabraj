@@ -28,6 +28,53 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+// ---------- مزامنة العهدة بين الأجهزة (Google Sheets) ----------
+function setSyncStatus(text, tone) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
+}
+
+async function fetchCloudWeeks() {
+  if (!CASHIER_SYNC_URL) return null;
+  try {
+    const res = await fetch(CASHIER_SYNC_URL);
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    return data.weeks || [];
+  } catch (e) {
+    return null;
+  }
+}
+
+async function postCloud(payload) {
+  if (!CASHIER_SYNC_URL) return;
+  try {
+    await fetch(CASHIER_SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    // بدون اتصال — البيانات محفوظة محلياً على الأقل، بتتزامن أول ما يرجع الاتصال
+  }
+}
+
+async function syncFromCloud() {
+  if (!CASHIER_SYNC_URL) return;
+  setSyncStatus('🔄 مزامنة...', '');
+  const weeks = await fetchCloudWeeks();
+  if (weeks) {
+    state.cashierFund.weeks = weeks;
+    saveState();
+    setSyncStatus('✓ متزامن', 'good');
+    renderCashier();
+  } else {
+    setSyncStatus('⚠ بدون اتصال — عرض آخر نسخة محفوظة', 'critical');
+  }
+}
+
 function fmt(n) {
   return Math.round(n).toLocaleString('en-US') + ' ريال';
 }
@@ -103,6 +150,7 @@ function showMainScreen() {
   document.getElementById('lock-screen').style.display = 'none';
   document.getElementById('main-screen').style.display = 'block';
   renderCashier();
+  syncFromCloud();
 }
 
 // ---------- منطق العهدة ----------
@@ -116,16 +164,20 @@ function weekSpent(week) {
 }
 
 function startNewWeek(allowance) {
-  state.cashierFund.weeks.push({ weekStart: todayISO(), allowance, entries: [] });
+  const weekStart = todayISO();
+  state.cashierFund.weeks.push({ weekStart, allowance, entries: [] });
   saveState();
   renderCashier();
+  postCloud({ action: 'start_week', weekStart, allowance }).then(syncFromCloud);
 }
 
 function addExpense(amount, description) {
   const week = currentWeek();
-  week.entries.unshift({ id: Date.now(), time: new Date().toISOString(), amount, description });
+  const entry = { id: Date.now(), time: new Date().toISOString(), amount, description };
+  week.entries.unshift(entry);
   saveState();
   renderCashier();
+  postCloud({ action: 'add_expense', id: entry.id, weekStart: week.weekStart, time: entry.time, amount, description }).then(syncFromCloud);
 }
 
 function deleteExpense(id) {
@@ -133,6 +185,7 @@ function deleteExpense(id) {
   week.entries = week.entries.filter((e) => e.id !== id);
   saveState();
   renderCashier();
+  postCloud({ action: 'delete_expense', id }).then(syncFromCloud);
 }
 
 function formatTime(iso) {
