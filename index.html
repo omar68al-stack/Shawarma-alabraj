@@ -39,32 +39,29 @@
     <button class="tab-link" data-view="view-admin">معاملات ومتابعات</button>
   </nav>
 
-  <!-- نظرة عامة -->
+  <!-- نظرة عامة / لوحة المتابعة -->
   <section class="view active" id="view-overview">
     <div class="card" style="margin-bottom:16px">
-      <h3>مدخلات المبيعات والإنتاج اليومي</h3>
-      <span class="card-note">عدّل هذه الأرقام كلما تغيّر أداء المحل — كل المؤشرات تُحسب تلقائياً وتُحفظ في متصفحك</span>
+      <h3>لوحة المتابعة</h3>
+      <span class="card-note">أهم أرقام المتابعة والتصحيح من كل أقسام الموقع بمكان واحد — اضغط أي بطاقة للانتقال لتفاصيلها</span>
+    </div>
+    <div class="grid grid-3" id="followup-grid"></div>
+  </section>
+
+  <!-- تحليل التكاليف -->
+  <section class="view" id="view-costs">
+    <div class="card" style="margin-bottom:16px">
+      <h3>افتراضات الإيراد والإنتاج</h3>
+      <span class="card-note">تقدير تقريبي فقط (المبيعات الفعلية تُتابَع بمحاسبة المحل) — يُستخدم لحساب جدوى سداد الديون والمشتريات القادمة، ولا يحتاج تحديث يومي</span>
       <div class="grid grid-4">
         <div class="input-row"><label>أقل مبيعات يومية</label><div class="input-suffix"><input type="number" id="input-salesLow" min="0" step="50" /><span>ريال</span></div></div>
         <div class="input-row"><label>أعلى مبيعات يومية</label><div class="input-suffix"><input type="number" id="input-salesHigh" min="0" step="50" /><span>ريال</span></div></div>
         <div class="input-row"><label>أقل كمية دجاج مُعلّقة</label><div class="input-suffix"><input type="number" id="input-kgLow" min="0" step="1" /><span>كجم/يوم</span></div></div>
         <div class="input-row"><label>أعلى كمية دجاج مُعلّقة</label><div class="input-suffix"><input type="number" id="input-kgHigh" min="0" step="1" /><span>كجم/يوم</span></div></div>
       </div>
+      <p class="footnote" id="startup-cost-note" style="margin-bottom:0"></p>
     </div>
 
-    <div class="grid grid-4" id="kpi-grid"></div>
-
-    <div class="card" style="margin-top:16px">
-      <h3>سيناريوهات الربح الشهري</h3>
-      <span class="card-note">مقارنة بين يوم مبيعات ضعيف ومتوسط وقوي، بنفس هيكل التكاليف الحالي</span>
-      <div class="grid grid-3" id="scenario-cards"></div>
-    </div>
-
-    <p class="footnote" id="startup-cost-note"></p>
-  </section>
-
-  <!-- تحليل التكاليف -->
-  <section class="view" id="view-costs">
     <div class="grid grid-2">
       <div class="card">
         <h3>الرواتب الشهرية</h3>
