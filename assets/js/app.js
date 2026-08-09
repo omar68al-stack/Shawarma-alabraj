@@ -1551,10 +1551,48 @@ function renderAll() {
   renderAdminTasks();
 }
 
+// ---------- نسخة احتياطية (تصدير/استيراد) ----------
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `shawarma-alabraj-backup-${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (e) {
+      alert('ملف غير صالح، تأكد إنه نسخة احتياطية صحيحة من هذا الموقع.');
+      return;
+    }
+    if (!confirm('سيتم استبدال كل البيانات الحالية بالنسخة المستوردة. متابعة؟')) return;
+    state = deepMerge(structuredClone(DEFAULT_STATE), parsed);
+    saveState();
+    renderAll();
+    alert('تم استيراد النسخة الاحتياطية بنجاح.');
+  };
+  reader.readAsText(file);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initTheme();
   renderAll();
+
+  document.getElementById('export-btn').addEventListener('click', exportBackup);
+  document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());
+  document.getElementById('import-file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) importBackup(file);
+    e.target.value = '';
+  });
 
   document.getElementById('reset-btn').addEventListener('click', () => {
     if (confirm('سيتم إعادة كل الأرقام إلى القيم الافتراضية المذكورة في بيانات المحل. متابعة؟')) {
