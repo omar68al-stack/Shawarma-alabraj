@@ -639,7 +639,7 @@ async function syncCashierFromCloud() {
   try {
     const url = CASHIER_SYNC_URL + (CASHIER_SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('bad response: ' + res.status);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     state.cashierFund.weeks = data.weeks || [];
     saveState();
@@ -648,7 +648,7 @@ async function syncCashierFromCloud() {
     renderOverview();
   } catch (e) {
     console.error('cashier sync fetch failed:', e);
-    setCashierSyncStatus('⚠ بدون اتصال — عرض آخر نسخة محفوظة', 'critical');
+    setCashierSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
   }
 }
 

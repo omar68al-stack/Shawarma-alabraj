@@ -41,16 +41,10 @@ function noCacheUrl_() {
 }
 
 async function fetchCloudWeeks() {
-  if (!CASHIER_SYNC_URL) return null;
-  try {
-    const res = await fetch(noCacheUrl_(), { cache: 'no-store' });
-    if (!res.ok) throw new Error('bad response: ' + res.status);
-    const data = await res.json();
-    return data.weeks || [];
-  } catch (e) {
-    console.error('cashier sync fetch failed:', e);
-    return null;
-  }
+  const res = await fetch(noCacheUrl_(), { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return data.weeks || [];
 }
 
 async function postCloud(payload) {
@@ -71,14 +65,15 @@ async function postCloud(payload) {
 async function syncFromCloud() {
   if (!CASHIER_SYNC_URL) return;
   setSyncStatus('🔄 مزامنة...', '');
-  const weeks = await fetchCloudWeeks();
-  if (weeks) {
+  try {
+    const weeks = await fetchCloudWeeks();
     state.cashierFund.weeks = weeks;
     saveState();
     setSyncStatus('✓ متزامن', 'good');
     renderCashier();
-  } else {
-    setSyncStatus('⚠ بدون اتصال — عرض آخر نسخة محفوظة', 'critical');
+  } catch (e) {
+    console.error('cashier sync fetch failed:', e);
+    setSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
   }
 }
 
