@@ -10,7 +10,7 @@ const MARKETER_PIN = '3690';
 
 // رابط Google Apps Script Web App لمزامنة العهدة والجرد والتسويق بين الأجهزة (كل واحد من جواله الشخصي)
 // اتركه فاضياً '' لتعطيل المزامنة والعمل محلياً بس على نفس الجهاز — راجع google-apps-script/DataSync.gs للتركيب
-const SYNC_URL = 'https://script.google.com/macros/s/AKfycbzf-BDB_QAS2phuXfrUitkAR-xNQKFYAZycgLrmpuHTBPC1Z6bZS_WWOHKfuus8moLT/exec';
+const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwTX3GH68AkiKaGfgm4OxdZ57VCa79Vb7arFSDTKm5hAGij05RHHL5J-pmJFS9TkjYH/exec';
 
 const DEFAULT_STATE = {
   // مبيعات يومية (نطاق سيء/جيد)
