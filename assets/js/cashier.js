@@ -36,14 +36,19 @@ function setSyncStatus(text, tone) {
   el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
 }
 
+function noCacheUrl_() {
+  return CASHIER_SYNC_URL + (CASHIER_SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+}
+
 async function fetchCloudWeeks() {
   if (!CASHIER_SYNC_URL) return null;
   try {
-    const res = await fetch(CASHIER_SYNC_URL);
-    if (!res.ok) throw new Error('bad response');
+    const res = await fetch(noCacheUrl_(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('bad response: ' + res.status);
     const data = await res.json();
     return data.weeks || [];
   } catch (e) {
+    console.error('cashier sync fetch failed:', e);
     return null;
   }
 }
@@ -55,8 +60,10 @@ async function postCloud(payload) {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
+      cache: 'no-store',
     });
   } catch (e) {
+    console.error('cashier sync post failed:', e);
     // بدون اتصال — البيانات محفوظة محلياً على الأقل، بتتزامن أول ما يرجع الاتصال
   }
 }
