@@ -16,12 +16,13 @@
 // الرابط (ما تحتاج تاخذ رابط جديد ولا تعدّل الموقع).
 //
 // أول مرة يُستدعى فيها السكربت بينشئ تلقائياً التبويبات المطلوبة بالشيت
-// (Weeks, Expenses, InventoryLogs, MarketingLogs) — ما تحتاج تجهزها يدوياً.
+// (Weeks, Expenses, InventoryLogs, MarketingLogs, AdminTasks) — ما تحتاج تجهزها يدوياً.
 
 const SHEET_WEEKS = 'Weeks';
 const SHEET_EXPENSES = 'Expenses';
 const SHEET_INVENTORY = 'InventoryLogs';
 const SHEET_MARKETING = 'MarketingLogs';
+const SHEET_ADMIN = 'AdminTasks';
 
 function getSheet_(name, headers) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -129,12 +130,32 @@ function saveMarketingLog_(log) {
   sheet.appendRow([log.weekStart, JSON.stringify(log.actuals || {})]);
 }
 
+// ---------- معاملات ومتابعات ----------
+const ADMIN_HEADERS = ['id', 'category', 'name', 'status'];
+
+function readAdminTasks_() {
+  const sheet = getSheet_(SHEET_ADMIN, ADMIN_HEADERS);
+  const rows = sheet.getDataRange().getValues().slice(1).filter((r) => r[0]);
+  return rows.map((r) => ({ id: String(r[0]), category: String(r[1]), name: String(r[2]), status: String(r[3]) }));
+}
+
+function saveAdminTasks_(tasks) {
+  const sheet = getSheet_(SHEET_ADMIN, ADMIN_HEADERS);
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, ADMIN_HEADERS.length).clearContent();
+  if (tasks.length) {
+    sheet.getRange(2, 1, tasks.length, ADMIN_HEADERS.length)
+      .setValues(tasks.map((t) => [t.id, t.category, t.name, t.status]));
+  }
+}
+
 // ---------- نقاط الدخول ----------
 function doGet(e) {
   return jsonOutput_({
     weeks: readWeeks_(),
     inventoryLogs: readInventoryLogs_(),
     marketingLogs: readMarketingLogs_(),
+    adminTasks: readAdminTasks_(),
   });
 }
 
@@ -156,6 +177,8 @@ function doPost(e) {
     saveMarketingLog_(payload.log);
   } else if (payload.action === 'delete_marketing') {
     deleteRowsBy_(getSheet_(SHEET_MARKETING, MARKETING_HEADERS), 0, payload.weekStart);
+  } else if (payload.action === 'save_admin_tasks') {
+    saveAdminTasks_(payload.tasks);
   }
 
   return jsonOutput_({ ok: true });

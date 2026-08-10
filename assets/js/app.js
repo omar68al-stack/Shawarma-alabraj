@@ -292,7 +292,7 @@ function initTabs() {
       document.querySelectorAll('section.view').forEach((v) => v.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.view).classList.add('active');
-      const syncedViews = ['view-costs', 'view-overview', 'view-inventory', 'view-marketing'];
+      const syncedViews = ['view-costs', 'view-overview', 'view-inventory', 'view-marketing', 'view-admin'];
       if (syncedViews.includes(btn.dataset.view)) {
         syncFromCloud();
       }
@@ -628,7 +628,7 @@ function renderCosts() {
 
 // ---------- مزامنة العهدة والجرد والتسويق من Google Sheets (تسجّلها الفرق من أجهزتهم الشخصية) ----------
 function setSyncStatus(text, tone) {
-  ['cashier-sync-status', 'inventory-sync-status', 'marketing-sync-status'].forEach((id) => {
+  ['cashier-sync-status', 'inventory-sync-status', 'marketing-sync-status', 'admin-sync-status'].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = text;
@@ -662,12 +662,19 @@ async function syncFromCloud() {
     state.cashierFund.weeks = data.weeks || [];
     state.inventoryLogs = data.inventoryLogs || [];
     state.marketingLogs = data.marketingLogs || [];
+    if (data.adminTasks && data.adminTasks.length) {
+      state.adminTasks = data.adminTasks;
+    } else if (state.adminTasks.length) {
+      // الشيت لسا ما فيه معاملات (أول مزامنة) — ارفع القائمة المحلية الحالية كبداية
+      postCloud({ action: 'save_admin_tasks', tasks: state.adminTasks });
+    }
     saveState();
     setSyncStatus('✓ متزامن', 'good');
     renderCosts();
     renderOverview();
     renderInventory();
     renderMarketing();
+    renderAdminTasks();
   } catch (e) {
     console.error('sync fetch failed:', e);
     setSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
@@ -1499,12 +1506,14 @@ function removeAdminTask(id) {
   state.adminTasks = state.adminTasks.filter((t) => t.id !== id);
   saveState();
   renderAdminTasks();
+  postCloud({ action: 'save_admin_tasks', tasks: state.adminTasks }).then(syncFromCloud);
 }
 
 function addAdminTask(category) {
   state.adminTasks.push({ id: 'admin-' + Date.now(), category, name: '', status: 'pending' });
   saveState();
   renderAdminTasks();
+  postCloud({ action: 'save_admin_tasks', tasks: state.adminTasks }).then(syncFromCloud);
 }
 
 function renderAdminTaskRow(task) {
@@ -1513,6 +1522,7 @@ function renderAdminTaskRow(task) {
   const topRow = el('div', 'task-card-top');
   const nameInput = el('input', 'task-name-input'); nameInput.placeholder = 'اسم المعاملة'; nameInput.value = task.name;
   nameInput.oninput = (e) => { task.name = e.target.value; saveState(); };
+  nameInput.onblur = () => { postCloud({ action: 'save_admin_tasks', tasks: state.adminTasks }).then(syncFromCloud); };
 
   const statusSelect = document.createElement('select');
   statusSelect.className = 'status-select status-' + task.status;
@@ -1527,6 +1537,7 @@ function renderAdminTaskRow(task) {
     statusSelect.className = 'status-select status-' + task.status;
     saveState();
     renderAdminTasks();
+    postCloud({ action: 'save_admin_tasks', tasks: state.adminTasks }).then(syncFromCloud);
   };
 
   const removeBtn = el('button', 'btn btn-sm task-remove-btn', '✕');
