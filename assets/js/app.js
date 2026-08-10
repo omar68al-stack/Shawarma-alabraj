@@ -638,7 +638,7 @@ async function syncCashierFromCloud() {
   setCashierSyncStatus('🔄 مزامنة...', '');
   try {
     const url = CASHIER_SYNC_URL + (CASHIER_SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store', credentials: 'omit' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     state.cashierFund.weeks = data.weeks || [];

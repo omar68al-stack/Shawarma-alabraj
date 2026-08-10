@@ -41,7 +41,7 @@ function noCacheUrl_() {
 }
 
 async function fetchCloudWeeks() {
-  const res = await fetch(noCacheUrl_(), { cache: 'no-store' });
+  const res = await fetch(noCacheUrl_(), { cache: 'no-store', credentials: 'omit' });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
   return data.weeks || [];
@@ -55,6 +55,7 @@ async function postCloud(payload) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
       cache: 'no-store',
+      credentials: 'omit',
     });
   } catch (e) {
     console.error('cashier sync post failed:', e);
