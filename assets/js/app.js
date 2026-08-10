@@ -292,8 +292,9 @@ function initTabs() {
       document.querySelectorAll('section.view').forEach((v) => v.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.view).classList.add('active');
-      if (btn.dataset.view === 'view-costs' || btn.dataset.view === 'view-overview') {
-        syncCashierFromCloud();
+      const syncedViews = ['view-costs', 'view-overview', 'view-inventory', 'view-marketing'];
+      if (syncedViews.includes(btn.dataset.view)) {
+        syncFromCloud();
       }
     });
   });
@@ -625,30 +626,51 @@ function renderCosts() {
   renderCashierFundSummary();
 }
 
-// ---------- مزامنة عهدة الكاشير من Google Sheets (يسجّلها الكاشير من جواله الشخصي) ----------
-function setCashierSyncStatus(text, tone) {
-  const el = document.getElementById('cashier-sync-status');
-  if (!el) return;
-  el.textContent = text;
-  el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
+// ---------- مزامنة العهدة والجرد والتسويق من Google Sheets (تسجّلها الفرق من أجهزتهم الشخصية) ----------
+function setSyncStatus(text, tone) {
+  ['cashier-sync-status', 'inventory-sync-status', 'marketing-sync-status'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
+  });
 }
 
-async function syncCashierFromCloud() {
-  if (!CASHIER_SYNC_URL) return;
-  setCashierSyncStatus('🔄 مزامنة...', '');
+async function postCloud(payload) {
+  if (!SYNC_URL) return;
   try {
-    const url = CASHIER_SYNC_URL + (CASHIER_SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+    await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  } catch (e) {
+    console.error('sync post failed:', e);
+  }
+}
+
+async function syncFromCloud() {
+  if (!SYNC_URL) return;
+  setSyncStatus('🔄 مزامنة...', '');
+  try {
+    const url = SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
     const res = await fetch(url, { cache: 'no-store', credentials: 'omit' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     state.cashierFund.weeks = data.weeks || [];
+    state.inventoryLogs = data.inventoryLogs || [];
+    state.marketingLogs = data.marketingLogs || [];
     saveState();
-    setCashierSyncStatus('✓ متزامن', 'good');
+    setSyncStatus('✓ متزامن', 'good');
     renderCosts();
     renderOverview();
+    renderInventory();
+    renderMarketing();
   } catch (e) {
-    console.error('cashier sync fetch failed:', e);
-    setCashierSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
+    console.error('sync fetch failed:', e);
+    setSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
   }
 }
 
@@ -1031,6 +1053,7 @@ function saveDraftInventory() {
   inventoryFormOpen = false;
   draftInventory = null;
   renderInventory();
+  postCloud({ action: 'save_inventory', log }).then(syncFromCloud);
 }
 
 function deleteInventoryLog(date) {
@@ -1039,6 +1062,7 @@ function deleteInventoryLog(date) {
   saveState();
   selectedInventoryDate = null;
   renderInventory();
+  postCloud({ action: 'delete_inventory', date }).then(syncFromCloud);
 }
 
 function applyParsedInventory(parsed) {
@@ -1358,6 +1382,7 @@ function saveDraftMarketingWeek() {
   marketingFormOpen = false;
   draftMarketingWeek = null;
   renderMarketing();
+  postCloud({ action: 'save_marketing', log }).then(syncFromCloud);
 }
 
 function deleteMarketingWeek(weekStart) {
@@ -1366,6 +1391,7 @@ function deleteMarketingWeek(weekStart) {
   saveState();
   selectedMarketingWeek = null;
   renderMarketing();
+  postCloud({ action: 'delete_marketing', weekStart }).then(syncFromCloud);
 }
 
 function renderMarketingWeekForm(container) {
@@ -1615,7 +1641,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initTheme();
   renderAll();
-  syncCashierFromCloud();
+  syncFromCloud();
 
   document.getElementById('export-btn').addEventListener('click', exportBackup);
   document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file-input').click());

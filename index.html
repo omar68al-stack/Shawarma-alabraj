@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/css/style.css?v=20260810b" />
+<link rel="stylesheet" href="assets/css/style.css?v=20260810c" />
 </head>
 <body>
 <div class="page-shell">
@@ -134,7 +134,10 @@
 
   <!-- الجرد اليومي -->
   <section class="view" id="view-inventory">
-    <p class="footnote" style="margin:0 4px 14px">الشيف يقدر يسجّل الجرد يومياً من <a href="chef.html" target="_blank">صفحته الخاصة</a> — تظهر هنا تلقائياً على نفس الجهاز.</p>
+    <div class="progress-header">
+      <p class="footnote" style="margin:0 4px">الشيف يقدر يسجّل الجرد يومياً من <a href="chef.html" target="_blank">صفحته الخاصة</a> — تظهر هنا تلقائياً.</p>
+      <span class="sync-status" id="inventory-sync-status"></span>
+    </div>
     <div class="card" id="inventory-toolbar" style="margin-bottom:16px"></div>
     <div id="inventory-body"></div>
   </section>
@@ -196,7 +199,10 @@
       <button class="btn btn-sm" id="add-marketing-goal-btn" style="margin-top:10px">+ إضافة مستهدف</button>
     </div>
 
-    <p class="footnote" style="margin:0 4px 14px">المسوّقة تقدر تسجّل الفعلي الأسبوعي من <a href="marketer.html" target="_blank">صفحتها الخاصة</a> — يظهر هنا تلقائياً على نفس الجهاز.</p>
+    <div class="progress-header">
+      <p class="footnote" style="margin:0 4px">المسوّقة تقدر تسجّل الفعلي الأسبوعي من <a href="marketer.html" target="_blank">صفحتها الخاصة</a> — يظهر هنا تلقائياً.</p>
+      <span class="sync-status" id="marketing-sync-status"></span>
+    </div>
     <div class="card" id="marketing-toolbar" style="margin-bottom:16px"></div>
     <div id="marketing-body"></div>
   </section>
@@ -217,7 +223,7 @@
 
 </div>
 
-<script src="assets/js/data.js?v=20260810b"></script>
-<script src="assets/js/app.js?v=20260810b"></script>
+<script src="assets/js/data.js?v=20260810c"></script>
+<script src="assets/js/app.js?v=20260810c"></script>
 </body>
 </html>

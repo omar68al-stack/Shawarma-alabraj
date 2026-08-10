@@ -37,7 +37,7 @@ function setSyncStatus(text, tone) {
 }
 
 function noCacheUrl_() {
-  return CASHIER_SYNC_URL + (CASHIER_SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+  return SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
 }
 
 async function fetchCloudWeeks() {
@@ -48,9 +48,9 @@ async function fetchCloudWeeks() {
 }
 
 async function postCloud(payload) {
-  if (!CASHIER_SYNC_URL) return;
+  if (!SYNC_URL) return;
   try {
-    await fetch(CASHIER_SYNC_URL, {
+    await fetch(SYNC_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
@@ -64,7 +64,7 @@ async function postCloud(payload) {
 }
 
 async function syncFromCloud() {
-  if (!CASHIER_SYNC_URL) return;
+  if (!SYNC_URL) return;
   setSyncStatus('🔄 مزامنة...', '');
   try {
     const weeks = await fetchCloudWeeks();

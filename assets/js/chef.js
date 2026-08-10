@@ -272,6 +272,56 @@ function showMainScreen() {
   document.getElementById('lock-screen').style.display = 'none';
   document.getElementById('main-screen').style.display = 'block';
   renderInventory();
+  syncFromCloud();
+}
+
+// ---------- مزامنة الجرد بين الأجهزة (Google Sheets) ----------
+function setSyncStatus(text, tone) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
+}
+
+function noCacheUrl_() {
+  return SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+}
+
+async function fetchCloudInventoryLogs() {
+  const res = await fetch(noCacheUrl_(), { cache: 'no-store', credentials: 'omit' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return data.inventoryLogs || [];
+}
+
+async function postCloud(payload) {
+  if (!SYNC_URL) return;
+  try {
+    await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  } catch (e) {
+    console.error('inventory sync post failed:', e);
+  }
+}
+
+async function syncFromCloud() {
+  if (!SYNC_URL) return;
+  setSyncStatus('🔄 مزامنة...', '');
+  try {
+    const logs = await fetchCloudInventoryLogs();
+    state.inventoryLogs = logs;
+    saveState();
+    setSyncStatus('✓ متزامن', 'good');
+    renderInventory();
+  } catch (e) {
+    console.error('inventory sync fetch failed:', e);
+    setSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
+  }
 }
 
 // ---------- الجرد اليومي ----------
@@ -329,6 +379,7 @@ function saveDraftInventory() {
   inventoryFormOpen = false;
   draftInventory = null;
   renderInventory();
+  postCloud({ action: 'save_inventory', log }).then(syncFromCloud);
 }
 
 function deleteInventoryLog(date) {
@@ -337,6 +388,7 @@ function deleteInventoryLog(date) {
   saveState();
   selectedInventoryDate = null;
   renderInventory();
+  postCloud({ action: 'delete_inventory', date }).then(syncFromCloud);
 }
 
 function applyParsedInventory(parsed) {

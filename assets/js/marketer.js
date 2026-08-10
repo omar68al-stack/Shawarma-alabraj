@@ -99,6 +99,56 @@ function showMainScreen() {
   document.getElementById('lock-screen').style.display = 'none';
   document.getElementById('main-screen').style.display = 'block';
   renderMarketing();
+  syncFromCloud();
+}
+
+// ---------- مزامنة التسويق بين الأجهزة (Google Sheets) ----------
+function setSyncStatus(text, tone) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
+}
+
+function noCacheUrl_() {
+  return SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+}
+
+async function fetchCloudMarketingLogs() {
+  const res = await fetch(noCacheUrl_(), { cache: 'no-store', credentials: 'omit' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return data.marketingLogs || [];
+}
+
+async function postCloud(payload) {
+  if (!SYNC_URL) return;
+  try {
+    await fetch(SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  } catch (e) {
+    console.error('marketing sync post failed:', e);
+  }
+}
+
+async function syncFromCloud() {
+  if (!SYNC_URL) return;
+  setSyncStatus('🔄 مزامنة...', '');
+  try {
+    const logs = await fetchCloudMarketingLogs();
+    state.marketingLogs = logs;
+    saveState();
+    setSyncStatus('✓ متزامن', 'good');
+    renderMarketing();
+  } catch (e) {
+    console.error('marketing sync fetch failed:', e);
+    setSyncStatus('⚠ فشل: ' + (e && e.message ? e.message : e), 'critical');
+  }
 }
 
 // ---------- التسويق ----------
@@ -149,6 +199,7 @@ function saveDraftMarketingWeek() {
   marketingFormOpen = false;
   draftMarketingWeek = null;
   renderMarketing();
+  postCloud({ action: 'save_marketing', log }).then(syncFromCloud);
 }
 
 function deleteMarketingWeek(weekStart) {
@@ -157,6 +208,7 @@ function deleteMarketingWeek(weekStart) {
   saveState();
   selectedMarketingWeek = null;
   renderMarketing();
+  postCloud({ action: 'delete_marketing', weekStart }).then(syncFromCloud);
 }
 
 function renderMarketingWeekForm(container) {
