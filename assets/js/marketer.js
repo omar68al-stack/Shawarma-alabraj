@@ -114,7 +114,7 @@ function jsonpFetch_() {
   return new Promise((resolve, reject) => {
     const cbName = 'syncCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
     const script = document.createElement('script');
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('انتهت مهلة الاتصال')); }, 15000);
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('انتهت مهلة الاتصال')); }, 35000);
     function cleanup() { clearTimeout(timeout); delete window[cbName]; script.remove(); }
     window[cbName] = (data) => { cleanup(); resolve(data); };
     script.onerror = () => { cleanup(); reject(new Error('تعذّر تحميل البيانات')); };
