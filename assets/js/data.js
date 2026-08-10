@@ -10,7 +10,7 @@ const MARKETER_PIN = '3690';
 
 // رابط Google Apps Script Web App لمزامنة عهدة الكاشير بين الأجهزة (كل واحد من جواله الشخصي)
 // اتركه فاضياً '' لتعطيل المزامنة والعمل محلياً بس على نفس الجهاز — راجع google-apps-script/CashierSync.gs للتركيب
-const CASHIER_SYNC_URL = '';
+const CASHIER_SYNC_URL = 'https://script.google.com/macros/s/AKfycby7H2apxYjXPe2wCU4z23vhWqQps6BimKS2yHgJMvA-b3u_ELfbKHRc4XYWR07Zn-lD/exec';
 
 const DEFAULT_STATE = {
   // مبيعات يومية (نطاق سيء/جيد)
