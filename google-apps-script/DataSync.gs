@@ -161,17 +161,28 @@ function saveAdminTasks_(tasks) {
 }
 
 // ---------- نقاط الدخول ----------
+// ملاحظة: Apps Script Web Apps مو موثوقة مع fetch() من متصفح لموقع مستضاف بمكان ثاني
+// (قيود CORS تختلف من متصفح لآخر بشكل غير متوقع، رغم إن فتح الرابط مباشرة يشتغل دايماً).
+// فبدل fetch()، الموقع يستخدم JSONP للقراءة (وسم <script> ما يخضع لـ CORS إطلاقاً)
+// ونموذج HTML مخفي (submit عادي، بدون XHR) للكتابة — الطريقتين تتجاوزان القيد كلياً.
 function doGet(e) {
-  return jsonOutput_({
+  const data = {
     weeks: readWeeks_(),
     inventoryLogs: readInventoryLogs_(),
     marketingLogs: readMarketingLogs_(),
     adminTasks: readAdminTasks_(),
-  });
+  };
+  if (e.parameter && e.parameter.callback) {
+    return ContentService
+      .createTextOutput(e.parameter.callback + '(' + JSON.stringify(data) + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return jsonOutput_(data);
 }
 
 function doPost(e) {
-  const payload = JSON.parse(e.postData.contents);
+  const raw = (e.parameter && e.parameter.payload) || (e.postData && e.postData.contents);
+  const payload = JSON.parse(raw);
 
   if (payload.action === 'start_week') {
     getSheet_(SHEET_WEEKS, ['weekStart', 'allowance']).appendRow([payload.weekStart, payload.allowance]);

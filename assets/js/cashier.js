@@ -28,7 +28,7 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-// ---------- مزامنة العهدة بين الأجهزة (Google Sheets) ----------
+// ---------- مزامنة العهدة بين الأجهزة (Google Sheets عبر JSONP — يتجاوز قيود CORS) ----------
 function setSyncStatus(text, tone) {
   const el = document.getElementById('sync-status');
   if (!el) return;
@@ -36,39 +36,60 @@ function setSyncStatus(text, tone) {
   el.className = 'sync-status' + (tone ? ' tone-' + tone : '');
 }
 
-function noCacheUrl_() {
-  return SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+function jsonpFetch_() {
+  return new Promise((resolve, reject) => {
+    const cbName = 'syncCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('انتهت مهلة الاتصال')); }, 15000);
+    function cleanup() { clearTimeout(timeout); delete window[cbName]; script.remove(); }
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('تعذّر تحميل البيانات')); };
+    script.src = SYNC_URL + (SYNC_URL.includes('?') ? '&' : '?') + 'callback=' + cbName + '&t=' + Date.now();
+    document.body.appendChild(script);
+  });
 }
 
-async function fetchCloudWeeks() {
-  const res = await fetch(noCacheUrl_(), { cache: 'no-store', credentials: 'omit' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  return data.weeks || [];
-}
+function postCloud(payload) {
+  return new Promise((resolve) => {
+    if (!SYNC_URL) { resolve(); return; }
+    const frameName = 'syncFrame_' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = frameName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
 
-async function postCloud(payload) {
-  if (!SYNC_URL) return;
-  try {
-    await fetch(SYNC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-      cache: 'no-store',
-      credentials: 'omit',
-    });
-  } catch (e) {
-    console.error('cashier sync post failed:', e);
-    // بدون اتصال — البيانات محفوظة محلياً على الأقل، بتتزامن أول ما يرجع الاتصال
-  }
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SYNC_URL;
+    form.target = frameName;
+    form.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      form.remove();
+      setTimeout(() => iframe.remove(), 500);
+      resolve();
+    };
+    iframe.addEventListener('load', finish);
+    setTimeout(finish, 8000);
+    form.submit();
+  });
 }
 
 async function syncFromCloud() {
   if (!SYNC_URL) return;
   setSyncStatus('🔄 مزامنة...', '');
   try {
-    const weeks = await fetchCloudWeeks();
-    state.cashierFund.weeks = weeks;
+    const data = await jsonpFetch_();
+    state.cashierFund.weeks = data.weeks || [];
     saveState();
     setSyncStatus('✓ متزامن', 'good');
     renderCashier();
