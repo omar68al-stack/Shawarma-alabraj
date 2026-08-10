@@ -24,12 +24,23 @@ const SHEET_INVENTORY = 'InventoryLogs';
 const SHEET_MARKETING = 'MarketingLogs';
 const SHEET_ADMIN = 'AdminTasks';
 
+// عدّة أجهزة (الكاشير/الشيف/المسوّقة) ممكن تنفّذ السكربت بنفس اللحظة، فلازم قفل قبل
+// إنشاء ورقة جديدة عشان ما يصير تعارض (محاولة إنشاء نفس الورقة مرتين بالتوازي)
 function getSheet_(name, headers) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    sheet.appendRow(headers);
+  if (sheet) return sheet;
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
+      sheet.appendRow(headers);
+    }
+  } finally {
+    lock.releaseLock();
   }
   return sheet;
 }
