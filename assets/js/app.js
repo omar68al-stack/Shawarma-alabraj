@@ -1529,6 +1529,7 @@ const ADMIN_CATEGORIES = [
   { key: 'store', title: 'أمور المحل والتراخيص' },
   { key: 'hr', title: 'الموارد البشرية' },
   { key: 'finance', title: 'المعاملات المالية' },
+  { key: 'marketing', title: 'التسويق' },
 ];
 
 function removeAdminTask(id) {
