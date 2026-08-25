@@ -1528,6 +1528,7 @@ const ADMIN_STATUS_LABELS = { pending: 'لم يبدأ', in_progress: 'جارٍ',
 const ADMIN_CATEGORIES = [
   { key: 'store', title: 'أمور المحل والتراخيص' },
   { key: 'hr', title: 'الموارد البشرية' },
+  { key: 'finance', title: 'المعاملات المالية' },
 ];
 
 function removeAdminTask(id) {
