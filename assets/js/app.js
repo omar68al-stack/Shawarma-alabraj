@@ -292,7 +292,7 @@ function initTabs() {
       document.querySelectorAll('section.view').forEach((v) => v.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.view).classList.add('active');
-      const syncedViews = ['view-costs', 'view-overview', 'view-inventory', 'view-marketing', 'view-admin'];
+      const syncedViews = ['view-costs', 'view-overview', 'view-inventory', 'view-admin'];
       if (syncedViews.includes(btn.dataset.view)) {
         syncFromCloud();
       }
@@ -1483,9 +1483,11 @@ function renderMarketingWeekDetail(container, log) {
 }
 
 function renderMarketing() {
+  const toolbar = document.getElementById('marketing-toolbar');
+  if (!toolbar) return;
+
   renderMarketingGoalsList();
 
-  const toolbar = document.getElementById('marketing-toolbar');
   toolbar.innerHTML = '';
   const logs = sortedMarketingLogs();
   if (!selectedMarketingWeek || !logs.find((l) => l.weekStart === selectedMarketingWeek)) {
@@ -1705,5 +1707,4 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('print-btn').addEventListener('click', () => window.print());
   document.getElementById('add-debt-btn').addEventListener('click', addDebt);
   document.getElementById('add-purchase-btn').addEventListener('click', addPurchase);
-  document.getElementById('add-marketing-goal-btn').addEventListener('click', addMarketingGoal);
 });
