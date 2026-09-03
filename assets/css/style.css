@@ -432,6 +432,26 @@ tbody tr:hover { background: var(--surface-2); }
   .debt-note { padding-inline-start: 0; }
 }
 
+/* جدول أقساط الدين */
+.installment-box { padding: 4px 0 12px 60px; }
+@media (max-width: 720px) { .installment-box { padding-inline-start: 0; } }
+.installment-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.installment-form .input-suffix { max-width: 160px; }
+.installment-form input[type="date"] {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-family: inherit;
+}
+.installment-summary { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 6px; }
+.installment-actions { display: flex; gap: 8px; }
+.installment-table-wrap { margin-top: 10px; }
+.installment-table-wrap table { font-size: 12.5px; }
+.installment-total-row td { font-weight: 700; }
+
 /* Marketing goals */
 #marketing-goals-list { margin-top: 12px; }
 .marketing-goal-row {

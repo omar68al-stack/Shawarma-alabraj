@@ -800,6 +800,137 @@ function renderCorrective() {
 }
 
 // ---------- خطة سداد الديون ----------
+let installmentFormOpenId = null;
+let expandedInstallmentDebtId = null;
+
+function addMonthsClamped(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const total = (m - 1) + n;
+  const ny = y + Math.floor(total / 12);
+  const nm = ((total % 12) + 12) % 12;
+  const lastDay = new Date(ny, nm + 1, 0).getDate();
+  const nd = Math.min(d, lastDay);
+  return `${ny}-${String(nm + 1).padStart(2, '0')}-${String(nd).padStart(2, '0')}`;
+}
+
+function fmtDateDMY(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function buildInstallmentSchedule(debt) {
+  const plan = debt.installmentPlan;
+  if (!plan || !plan.monthlyAmount || debt.amount <= 0) return [];
+  const months = Math.max(1, Math.ceil(debt.amount / plan.monthlyAmount));
+  const rows = [];
+  let allocated = 0;
+  for (let i = 1; i <= months; i++) {
+    const amount = i < months ? plan.monthlyAmount : +(debt.amount - allocated).toFixed(2);
+    allocated += amount;
+    rows.push({
+      index: i,
+      dueDate: addMonthsClamped(plan.startDate, i - 1),
+      amount,
+      paid: i <= (plan.paidCount || 0),
+    });
+  }
+  return rows;
+}
+
+function renderInstallmentSection(wrap, debt) {
+  const box = el('div', 'installment-box');
+  const plan = debt.installmentPlan;
+
+  if (!plan) {
+    const toggleBtn = el('button', 'btn btn-sm', installmentFormOpenId === debt.id ? 'إلغاء' : '➕ إنشاء جدول أقساط');
+    toggleBtn.onclick = () => { installmentFormOpenId = installmentFormOpenId === debt.id ? null : debt.id; renderDebt(); };
+    box.appendChild(toggleBtn);
+
+    if (installmentFormOpenId === debt.id) {
+      const form = el('div', 'installment-form');
+
+      const amtWrap = el('div', 'input-suffix');
+      const amtInput = document.createElement('input'); amtInput.type = 'number'; amtInput.min = '0'; amtInput.step = '50'; amtInput.placeholder = 'القسط الشهري';
+      const amtUnit = document.createElement('span'); amtUnit.textContent = 'ريال';
+      amtWrap.appendChild(amtInput); amtWrap.appendChild(amtUnit);
+
+      const dateInput = document.createElement('input'); dateInput.type = 'date'; dateInput.value = todayISO();
+
+      const createBtn = el('button', 'btn btn-sm btn-primary', 'إنشاء الجدول');
+      createBtn.onclick = () => {
+        const monthlyAmount = parseFloat(amtInput.value) || 0;
+        if (monthlyAmount <= 0) { alert('أدخل قيمة القسط الشهري أولاً'); return; }
+        debt.installmentPlan = { monthlyAmount, startDate: dateInput.value || todayISO(), paidCount: 0 };
+        installmentFormOpenId = null;
+        expandedInstallmentDebtId = debt.id;
+        saveState();
+        renderDebt();
+      };
+
+      form.appendChild(amtWrap);
+      form.appendChild(dateInput);
+      form.appendChild(createBtn);
+      box.appendChild(form);
+    }
+  } else {
+    const schedule = buildInstallmentSchedule(debt);
+    const paidCount = Math.min(plan.paidCount || 0, schedule.length);
+
+    const summary = el('div', 'installment-summary');
+    summary.innerHTML = `جدول أقساط: <b>${fmt(plan.monthlyAmount)}</b> شهرياً — <b>${paidCount}</b> من <b>${schedule.length}</b> مدفوع`;
+
+    const actions = el('div', 'installment-actions');
+    const viewBtn = el('button', 'btn btn-sm', expandedInstallmentDebtId === debt.id ? 'إخفاء الجدول' : 'عرض الجدول');
+    viewBtn.onclick = () => { expandedInstallmentDebtId = expandedInstallmentDebtId === debt.id ? null : debt.id; renderDebt(); };
+    const deleteBtn = el('button', 'btn btn-sm', '🗑 حذف الجدول');
+    deleteBtn.onclick = () => {
+      if (!confirm('حذف جدول الأقساط لهذا الدين؟')) return;
+      delete debt.installmentPlan;
+      if (expandedInstallmentDebtId === debt.id) expandedInstallmentDebtId = null;
+      saveState();
+      renderDebt();
+    };
+    actions.appendChild(viewBtn);
+    actions.appendChild(deleteBtn);
+
+    box.appendChild(summary);
+    box.appendChild(actions);
+
+    if (expandedInstallmentDebtId === debt.id) {
+      const tableWrap = el('div', 'table-wrap installment-table-wrap');
+      const table = document.createElement('table');
+      table.innerHTML = `<thead><tr><th>تاريخ الاستحقاق</th><th>القسط #</th><th>القسط الشهري</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>${schedule.map((row) => `
+          <tr>
+            <td>${fmtDateDMY(row.dueDate)}</td>
+            <td>${row.index}</td>
+            <td>${fmt(row.amount)}</td>
+            <td>${row.paid ? '<span class="tag-cat tone-good">مغلق</span>' : '<span class="tag-cat tone-warning">مفتوح</span>'}</td>
+            <td data-row-action="${row.index}"></td>
+          </tr>`).join('')}
+          <tr class="installment-total-row"><td colspan="2">المجموع</td><td>${fmt(schedule.reduce((s, r) => s + r.amount, 0))}</td><td colspan="2"></td></tr>
+        </tbody>`;
+      tableWrap.appendChild(table);
+      box.appendChild(tableWrap);
+
+      table.querySelectorAll('[data-row-action]').forEach((cell) => {
+        const idx = parseInt(cell.dataset.rowAction, 10);
+        if (idx === paidCount + 1) {
+          const b = el('button', 'btn btn-sm', 'تحديد كمدفوع');
+          b.onclick = () => { debt.installmentPlan.paidCount = idx; saveState(); renderDebt(); };
+          cell.appendChild(b);
+        } else if (idx === paidCount && paidCount > 0) {
+          const b = el('button', 'btn btn-sm', 'تراجع');
+          b.onclick = () => { debt.installmentPlan.paidCount = idx - 1; saveState(); renderDebt(); };
+          cell.appendChild(b);
+        }
+      });
+    }
+  }
+
+  wrap.appendChild(box);
+}
+
 function moveDebt(idx, dir) {
   const target = idx + dir;
   if (target < 0 || target >= state.debts.length) return;
@@ -858,6 +989,8 @@ function renderDebtsList() {
       const noteEl = el('div', 'debt-note', debt.note);
       wrap.appendChild(noteEl);
     }
+
+    renderInstallmentSection(wrap, debt);
   });
 }
 
