@@ -1842,15 +1842,6 @@ document.addEventListener('DOMContentLoaded', () => {
     e.target.value = '';
   });
 
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    if (!confirm('تحذير: هذا الزر يمسح كل شي بالموقع ويرجعه للقيم الافتراضية — الديون وجداول الأقساط، مشتريات قادمة، المستهدفات التسويقية، افتراضات التكاليف والرواتب، والخطة التصحيحية. سيتم تنزيل نسخة احتياطية تلقائياً قبل الحذف. متابعة؟')) return;
-    exportBackup();
-    state = structuredClone(DEFAULT_STATE);
-    saveState();
-    renderAll();
-    syncFromCloud();
-  });
-
   document.getElementById('print-btn').addEventListener('click', () => window.print());
   document.getElementById('add-debt-btn').addEventListener('click', addDebt);
   document.getElementById('add-purchase-btn').addEventListener('click', addPurchase);
