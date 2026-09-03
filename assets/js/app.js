@@ -821,11 +821,16 @@ function fmtDateDMY(iso) {
 function buildInstallmentSchedule(debt) {
   const plan = debt.installmentPlan;
   if (!plan || !plan.monthlyAmount || debt.amount <= 0) return [];
-  const months = Math.max(1, Math.ceil(debt.amount / plan.monthlyAmount));
+  const first = plan.firstAmount > 0 ? plan.firstAmount : plan.monthlyAmount;
+  const afterFirst = Math.max(0, debt.amount - first);
+  const months = afterFirst > 0 ? 1 + Math.ceil(afterFirst / plan.monthlyAmount) : 1;
   const rows = [];
   let allocated = 0;
   for (let i = 1; i <= months; i++) {
-    const amount = i < months ? plan.monthlyAmount : +(debt.amount - allocated).toFixed(2);
+    let amount;
+    if (i === months) amount = +(debt.amount - allocated).toFixed(2);
+    else if (i === 1) amount = first;
+    else amount = plan.monthlyAmount;
     allocated += amount;
     rows.push({
       index: i,
@@ -856,11 +861,17 @@ function renderInstallmentSection(wrap, debt) {
 
       const dateInput = document.createElement('input'); dateInput.type = 'date'; dateInput.value = todayISO();
 
+      const firstAmtWrap = el('div', 'input-suffix');
+      const firstAmtInput = document.createElement('input'); firstAmtInput.type = 'number'; firstAmtInput.min = '0'; firstAmtInput.step = '50'; firstAmtInput.placeholder = 'أول قسط مختلف (اختياري)';
+      const firstAmtUnit = document.createElement('span'); firstAmtUnit.textContent = 'ريال';
+      firstAmtWrap.appendChild(firstAmtInput); firstAmtWrap.appendChild(firstAmtUnit);
+
       const createBtn = el('button', 'btn btn-sm btn-primary', 'إنشاء الجدول');
       createBtn.onclick = () => {
         const monthlyAmount = parseFloat(amtInput.value) || 0;
         if (monthlyAmount <= 0) { alert('أدخل قيمة القسط الشهري أولاً'); return; }
-        debt.installmentPlan = { monthlyAmount, startDate: dateInput.value || todayISO(), paidCount: 0 };
+        const firstAmount = parseFloat(firstAmtInput.value) || 0;
+        debt.installmentPlan = { monthlyAmount, firstAmount, startDate: dateInput.value || todayISO(), paidCount: 0 };
         installmentFormOpenId = null;
         expandedInstallmentDebtId = debt.id;
         saveState();
@@ -869,6 +880,7 @@ function renderInstallmentSection(wrap, debt) {
 
       form.appendChild(amtWrap);
       form.appendChild(dateInput);
+      form.appendChild(firstAmtWrap);
       form.appendChild(createBtn);
       box.appendChild(form);
     }
@@ -877,7 +889,8 @@ function renderInstallmentSection(wrap, debt) {
     const paidCount = Math.min(plan.paidCount || 0, schedule.length);
 
     const summary = el('div', 'installment-summary');
-    summary.innerHTML = `جدول أقساط: <b>${fmt(plan.monthlyAmount)}</b> شهرياً — <b>${paidCount}</b> من <b>${schedule.length}</b> مدفوع`;
+    const firstNote = plan.firstAmount > 0 && plan.firstAmount !== plan.monthlyAmount ? ` (أول قسط ${fmt(plan.firstAmount)})` : '';
+    summary.innerHTML = `جدول أقساط: <b>${fmt(plan.monthlyAmount)}</b> شهرياً${firstNote} — <b>${paidCount}</b> من <b>${schedule.length}</b> مدفوع`;
 
     const actions = el('div', 'installment-actions');
     const viewBtn = el('button', 'btn btn-sm', expandedInstallmentDebtId === debt.id ? 'إخفاء الجدول' : 'عرض الجدول');
